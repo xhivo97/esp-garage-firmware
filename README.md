@@ -28,11 +28,11 @@ code .
 ```
 - ### Build and flash
 Run these with `F1` on VS Code:
-    - `ESP-IDF: Add vscode configuration folder`
-    - `ESP-IDF: Set Espressif device target`
-    - `ESP-IDF: Select port to use (COM, tty, usbserial)`
-    - `ESP-IDF: Build your project`
-    - `ESP-IDF: Flash (UART) your project`
+- `ESP-IDF: Add vscode configuration folder`
+- `ESP-IDF: Set Espressif device target`
+- `ESP-IDF: Select port to use (COM, tty, usbserial)`
+- `ESP-IDF: Build your project`
+- `ESP-IDF: Flash (UART) your project`
 
 ## TO-DO List
 

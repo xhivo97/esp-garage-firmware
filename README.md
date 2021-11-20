@@ -10,6 +10,8 @@ Useful links:
 - ESP RainMaker documentation [here](http://rainmaker.espressif.com/docs/get-started.html).
 - ESP RainMaker C API [here](https://docs.espressif.com/projects/esp-rainmaker/en/latest/c-api-reference/index.html).
 
+You can find the hardware [here](https://github.com/xhivo97/esp-garage-hardware)
+
 ## Prerequisites
 
 Any of these:

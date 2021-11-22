@@ -23,18 +23,21 @@ void light_on() {
     gpio_set_level(LIGHT_GPIO, 1);
 
 }
+
 void garage_open() {
     xTimerStart(motor_run_limit_timer, portMAX_DELAY);
     light_on();
     gpio_set_level(RELAY_A_GPIO, 1);
     gpio_set_level(RELAY_B_GPIO, 0);
 }
+
 void garage_close() {
     xTimerStart(motor_run_limit_timer, portMAX_DELAY);
     light_on();
     gpio_set_level(RELAY_A_GPIO, 0);
     gpio_set_level(RELAY_B_GPIO, 1);
 }
+
 void garage_stop() {
     xTimerStop(motor_run_limit_timer, portMAX_DELAY);
     light_on();
@@ -53,7 +56,6 @@ void lightOffCallback(TimerHandle_t xTimer) {
 }
 
 void garageOpenCallback(TimerHandle_t xTimer) {
-    run_state_machine();
     update_status();
     door_open_notification();
 }
@@ -70,7 +72,13 @@ void rateLimitCallback(TimerHandle_t xTimer) {
     update_status();
 }
 void motorRunLimitCallback(TimerHandle_t xTimer) {
+    if (garage_state == OPENING_S) {
+        garage_state = STOPPED_WHILE_OPENING_S;
+    } else if (garage_state == CLOSING_S) {
+        garage_state = STOPPED_WHILE_CLOSING_S;
+    }
     garage_stop();
+    update_status();
 }
 
 void queue_state_machine() {
@@ -142,6 +150,7 @@ void setup_gpios() {
         (void *)4,
         motorRunLimitCallback
     );
+
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;

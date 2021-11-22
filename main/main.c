@@ -1,5 +1,3 @@
-//#include <stdio.h>
-
 #include <string.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -30,11 +28,8 @@
 
 static const char *TAG = "app_main";
 
-// // //
 esp_rmaker_device_t *garage_device;
-// // //
 
-// // //
 static esp_err_t test_callback(
     const esp_rmaker_device_t *device,
     const esp_rmaker_param_t *param,
@@ -58,22 +53,16 @@ static esp_err_t test_callback(
             esp_rmaker_device_get_name(device),
             esp_rmaker_param_get_name(param)
         );
-        if (val.val.b) {
-            queue_state_machine();
-            esp_rmaker_param_update_and_report(param, esp_rmaker_bool(false));
-        }
+        queue_state_machine();
     }
     return ESP_OK;
 }
-// // //
+
 void update_status() {
     esp_rmaker_param_t* status = esp_rmaker_device_get_param_by_name(garage_device, "Status");
     esp_rmaker_param_update_and_report(status, esp_rmaker_str(get_garage_state()));
-    esp_rmaker_param_t* button = esp_rmaker_device_get_param_by_name(garage_device, "Button");
-    esp_rmaker_param_update_and_report(button, esp_rmaker_bool(false));
 }
-// // //
-// // //
+
 void door_open_notification() {
     char* minute = GARAGE_OPEN_ALERT_MINUTES > 1 ? "minutes" : "minute";
     char status[128];
@@ -85,8 +74,6 @@ void door_open_notification() {
     );
     esp_rmaker_raise_alert(status);
 }
-// // //
-
 
 void app_main(void)
 {
@@ -121,21 +108,9 @@ void app_main(void)
         abort();
     }
 
-// // //
     garage_device = esp_rmaker_device_create("Garage", NULL, NULL);
     esp_rmaker_device_add_cb(garage_device, test_callback, NULL);
     esp_rmaker_device_add_param(garage_device, esp_rmaker_name_param_create(ESP_RMAKER_DEF_NAME_PARAM, "Garage"));
-    esp_rmaker_param_t *garage_param = esp_rmaker_param_create(
-        "Button",
-        NULL,
-        esp_rmaker_bool(false),
-        PROP_FLAG_READ | PROP_FLAG_WRITE
-    );
-    if (garage_param) {
-        esp_rmaker_param_add_ui_type(garage_param, ESP_RMAKER_UI_TOGGLE);
-    }
-    esp_rmaker_device_add_param(garage_device, garage_param);
-    esp_rmaker_device_assign_primary_param(garage_device, garage_param);
 
     esp_rmaker_param_t *garage_status = esp_rmaker_param_create(
         "Status",
@@ -148,8 +123,25 @@ void app_main(void)
     }
     esp_rmaker_device_add_param(garage_device, garage_status);
 
+    esp_rmaker_param_t *garage_param = esp_rmaker_param_create(
+        "Button",
+        NULL,
+        esp_rmaker_bool(false),
+        PROP_FLAG_READ | PROP_FLAG_WRITE
+    );
+    if (garage_param) {
+        esp_rmaker_param_add_ui_type(garage_param, "esp.ui.trigger");
+    }
+    esp_rmaker_device_add_param(garage_device, garage_param);
+    esp_rmaker_device_assign_primary_param(garage_device, garage_param);
+
     esp_rmaker_node_add_device(node, garage_device);
-// // //
+
+    /* Enable OTA */
+    esp_rmaker_ota_config_t ota_config = {
+        .server_cert = ESP_RMAKER_OTA_DEFAULT_SERVER_CERT,
+    };
+    esp_rmaker_ota_enable(&ota_config, OTA_USING_PARAMS);
 
     /* Enable Insights. Requires CONFIG_ESP_INSIGHTS_ENABLED=y */
     app_insights_enable();

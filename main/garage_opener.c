@@ -9,6 +9,9 @@ static TimerHandle_t garage_open_timer = NULL;
 static TimerHandle_t debounce_timer = NULL;
 static TimerHandle_t rate_limit_timer = NULL;
 static TimerHandle_t motor_run_limit_timer = NULL;
+static TimerHandle_t limit_switch_cooldown_timer = NULL;
+
+static bool limit_switch_cooldown = false;
 
 void update_status();
 void door_open_notification();
@@ -67,6 +70,10 @@ void debounceCallback(TimerHandle_t xTimer) {
     }
 }
 
+void limitSwitchCooldownCallback(TimerHandle_t xTimer) {
+    limit_switch_cooldown = false;
+}
+
 void rateLimitCallback(TimerHandle_t xTimer) {
     run_state_machine();
     update_status();
@@ -93,17 +100,25 @@ static void gpio_task_example(void* arg)
             if(!gpio_get_level(io_num)) {
                 switch(io_num) {
                     case LIMIT_A_GPIO:
-                        garage_stop();
-                        printf("OPENED\n");
-                        garage_state = OPENED_S;
-                        update_status();
+                        if (!limit_switch_cooldown) {
+                            limit_switch_cooldown = true;
+                            xTimerStart(limit_switch_cooldown_timer, portMAX_DELAY);
+                            garage_stop();
+                            printf("OPENED\n");
+                            garage_state = OPENED_S;
+                            update_status();
+                        }
                     break;
                     case LIMIT_B_GPIO:
-                        garage_stop();
-                        garage_state = CLOSED_S;
-                        printf("CLOSED\n");
-                        xTimerStop(garage_open_timer, portMAX_DELAY);
-                        update_status();
+                        if (!limit_switch_cooldown) {
+                            limit_switch_cooldown = true;
+                            xTimerStart(limit_switch_cooldown_timer, portMAX_DELAY);
+                            garage_stop();
+                            garage_state = CLOSED_S;
+                            printf("CLOSED\n");
+                            xTimerStop(garage_open_timer, portMAX_DELAY);
+                            update_status();
+                        }
                     break;
                     case BUTTON_GPIO:
                         xTimerStart(debounce_timer, portMAX_DELAY);
@@ -149,6 +164,13 @@ void setup_gpios() {
         pdFALSE,
         (void *)4,
         motorRunLimitCallback
+    );
+    limit_switch_cooldown_timer = xTimerCreate(
+        "Motor run limit timer",
+        50 / portTICK_PERIOD_MS,
+        pdFALSE,
+        (void *)5,
+        limitSwitchCooldownCallback
     );
 
     gpio_config_t io_conf = {};

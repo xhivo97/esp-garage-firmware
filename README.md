@@ -52,8 +52,6 @@ Run these with `F1` on VS Code:
     > ~~Monitor door state via the app.~~
 
 - [ ] Additional functionality.
-    > Make a custom device/widget for the ESP RainMaker Android and iOS app that is better suited for a garage door.
-
     > Integrate with voice assistants.
 
 _Will add more to the list as the PCB design progresses_

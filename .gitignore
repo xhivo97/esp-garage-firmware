@@ -1,0 +1,6 @@
+.cache
+.vscode
+esp-rainmaker
+build
+sdkconfig
+dependencies.lock

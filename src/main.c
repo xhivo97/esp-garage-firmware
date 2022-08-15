@@ -2,13 +2,12 @@
 #include <nvs_flash.h>
 #include <esp_log.h>
 #include <app_wifi.h>
+#include <app_reset.h>
 #include <esp_rmaker_core.h>
 #include <esp_rmaker_standard_types.h>
 #include <esp_rmaker_standard_params.h>
 
 #include "garage_control.h"
-
-static const char *TAG = "app_main";
 
 esp_rmaker_device_t *garage_device;
 
@@ -20,9 +19,7 @@ static esp_err_t garage_rainmaker_callback(const esp_rmaker_device_t *device,
 
     if (strcmp(esp_rmaker_param_get_name(param), "Button") == 0) {
         if (val.val.b) {
-            timer_pause(TIMER_GROUP_0, TIMER_0);
             timer_enabled[SW_BUTTON_COOLDOWN_TIMER] = true;
-            timer_start(TIMER_GROUP_0, TIMER_0);
         }
     }
 
@@ -35,15 +32,18 @@ void update_status(char *state) {
 }
 
 void send_notification(char *message) {
-    esp_rmaker_raise_alert(message);
+    ESP_LOGI(TAG, "Sending notification: {%s}", message);
+    //esp_rmaker_raise_alert(message);
 }
 
 void app_main() {
     esp_err_t err = garage_init();
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Could not initialize board. Aborting!!!");
+        ESP_LOGI(TAG, "Could not initialize board. Aborting!!!");
         abort();
     }
+
+    app_reset_button_register( app_reset_button_create(9, 0), 3, 10);
 
     err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -57,7 +57,8 @@ void app_main() {
     esp_rmaker_config_t rainmaker_cfg = {
         .enable_time_sync = false,
     };
-    esp_rmaker_node_t *node = esp_rmaker_node_init(&rainmaker_cfg, "Garage Opener", "Switch");
+    esp_rmaker_node_t *node = esp_rmaker_node_init(&rainmaker_cfg,
+        "ESP RainMaker Garage Opener", "Garage Opener");
     if (!node) {
         ESP_LOGE(TAG, "Could not initialise node. Aborting!!!");
         vTaskDelay(1000/portTICK_PERIOD_MS);
@@ -80,9 +81,11 @@ void app_main() {
 
     esp_rmaker_param_t *garage_param = esp_rmaker_param_create("Button", NULL,
         esp_rmaker_bool(false), PROP_FLAG_READ | PROP_FLAG_WRITE);
-    esp_rmaker_param_add_ui_type(garage_param, "esp.ui.trigger");
+    esp_rmaker_param_add_ui_type(garage_param, ESP_RMAKER_UI_TRIGGER);
 
+    esp_rmaker_device_add_param(garage_device, garage_status);
     esp_rmaker_device_add_param(garage_device, garage_param);
+    
     esp_rmaker_device_assign_primary_param(garage_device, garage_param);
 
     esp_rmaker_node_add_device(node, garage_device);

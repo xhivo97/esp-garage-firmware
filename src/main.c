@@ -1,8 +1,14 @@
 #include <string.h>
 #include <nvs_flash.h>
 #include <esp_log.h>
+#include "esp_insights.h"
+
 #include <app_wifi.h>
 #include <app_reset.h>
+#include <app_insights.h>
+
+#include "esp_rmaker_utils.h"
+
 #include <esp_rmaker_core.h>
 #include <esp_rmaker_standard_types.h>
 #include <esp_rmaker_standard_params.h>
@@ -27,19 +33,21 @@ static esp_err_t garage_rainmaker_callback(const esp_rmaker_device_t *device,
 }
 
 void update_status(char *state) {
+    ESP_DIAG_EVENT(TAG, "%s", state);
     esp_rmaker_param_t* status = esp_rmaker_device_get_param_by_name(garage_device, "Status");
     esp_rmaker_param_update_and_report(status, esp_rmaker_str(state));
 }
 
 void send_notification(char *message) {
+    ESP_DIAG_EVENT(TAG, "%s", message);
     ESP_LOGI(TAG, "Sending notification: {%s}", message);
-    //esp_rmaker_raise_alert(message);
+    esp_rmaker_raise_alert(message);
 }
 
 void app_main() {
     esp_err_t err = garage_init();
     if (err != ESP_OK) {
-        ESP_LOGI(TAG, "Could not initialize board. Aborting!!!");
+        ESP_LOGE(TAG, "Could not initialize board. Aborting!!!");
         abort();
     }
 
@@ -89,6 +97,9 @@ void app_main() {
     esp_rmaker_device_assign_primary_param(garage_device, garage_param);
 
     esp_rmaker_node_add_device(node, garage_device);
+
+    /* Enable Insights. Requires CONFIG_ESP_INSIGHTS_ENABLED=y */
+    app_insights_enable();
 
     esp_rmaker_start();
 

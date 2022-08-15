@@ -4,3 +4,4 @@ esp-rainmaker
 build
 sdkconfig
 dependencies.lock
+sdkconfig.old

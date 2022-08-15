@@ -41,7 +41,7 @@ void update_status(char *state) {
 void send_notification(char *message) {
     ESP_DIAG_EVENT(TAG, "%s", message);
     ESP_LOGI(TAG, "Sending notification: {%s}", message);
-    esp_rmaker_raise_alert(message);
+    //esp_rmaker_raise_alert(message);
 }
 
 void app_main() {

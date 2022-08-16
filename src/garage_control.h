@@ -198,10 +198,14 @@ static void event_listener() {
                                 open_garage();
                                 break;
                             case OPENING_S:
+                                if (get_level(LIMIT_A_GPIO) || get_level(LIMIT_B_GPIO))
+                                    break;
                                 garage_state = STOPPED_WHILE_OPENING_S;
                                 stop_garage();
                                 break;
                             case CLOSING_S:
+                                if (get_level(LIMIT_A_GPIO) || get_level(LIMIT_B_GPIO))
+                                    break;
                                 garage_state = STOPPED_WHILE_CLOSING_S;
                                 stop_garage();
                                 break;

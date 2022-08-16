@@ -98,6 +98,8 @@ void app_main() {
 
     esp_rmaker_node_add_device(node, garage_device);
 
+    esp_rmaker_ota_enable_default();
+
     /* Enable Insights. Requires CONFIG_ESP_INSIGHTS_ENABLED=y */
     app_insights_enable();
 

@@ -1,3 +1,4 @@
+![.github/workflows/build.yml](https://github.com/xhivo97/esp-garage-firmware/actions/workflows/build.yml/badge.svg)
 # Features
 - Controls the motor direction with two relays.
 - Controls a light via a relay.
